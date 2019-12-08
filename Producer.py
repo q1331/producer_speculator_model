@@ -53,9 +53,9 @@ class Producer(Agent):
             delta_amount = delta_amount * self.model.offer / self.model.demand
         if self.model.demand < self.model.offer and delta_amount < 0:
             delta_amount = delta_amount * self.model.demand / self.model.offer
+        self.last_order = delta_amount
         self.money -= delta_amount * self.model.price
         self.stocks += delta_amount
-        self.last_order = delta_amount
 
     def step(self):
         if self.wealth > 0:

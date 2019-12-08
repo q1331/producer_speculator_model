@@ -17,19 +17,73 @@ def compute_average_agent_wealth(model):
     model.mean_wealth = mean_wealth
     return mean_wealth
 
+def compute_average_speculator_wealth(model):
+    agent_wealths = [agent.wealth for agent in model.schedule.agents if isinstance(agent, Speculator)]
+    mean_wealth = statistics.mean(agent_wealths)
+    return mean_wealth
+
+def compute_average_producer_wealth(model):
+    agent_wealths = [agent.wealth for agent in model.schedule.agents if isinstance(agent, Producer)]
+    mean_wealth = statistics.mean(agent_wealths)
+    return mean_wealth
+
+def compute_max_p_wealth(model):
+    max_p_wealths = max([agent.wealth for agent in model.schedule.agents if isinstance(agent, Producer)])
+    return max_p_wealths
+
+def compute_max_s_wealth(model):
+    max_s_wealths = max([agent.wealth for agent in model.schedule.agents if isinstance(agent, Speculator)])
+    return max_s_wealths
 
 def compute_demand(model):
     model.demand = sum([a.last_order for a in model.schedule.agents if a.last_order > 0])
     return model.demand
 
+def compute_good_strategy(model):
+    good_count = sum([1 for s in model.stategy_manager.strategies.values() if s.score > 0])
+    return good_count
+
+def compute_bad_strategy(model):
+    bad_count = sum([1 for s in model.stategy_manager.strategies.values() if s.score < 0])
+    return bad_count
+
+def compute_neutral_strategy(model):
+    count = sum([1 for s in model.stategy_manager.strategies.values() if s.score == 0])
+    return count
+
+def compute_bad_producer(model):
+    mean = statistics.mean([a.wealth for a in model.schedule.agents if isinstance(a, Producer)])
+    bad = sum([1 for a in model.schedule.agents if isinstance(a, Producer) and a.wealth < mean])
+    return bad
+
+def compute_good_producer(model):
+    mean = statistics.mean([a.wealth for a in model.schedule.agents if isinstance(a, Producer)])
+    good = sum([1 for a in model.schedule.agents if isinstance(a, Producer) and a.wealth > mean])
+    return good
+
+
+def compute_bad_speculator(model):
+    mean = statistics.mean([a.wealth for a in model.schedule.agents if isinstance(a, Speculator)])
+    bad = sum([1 for a in model.schedule.agents if isinstance(a, Speculator) and a.wealth < mean])
+    return bad
+
+def compute_good_speculator(model):
+    mean = statistics.mean([a.wealth for a in model.schedule.agents if isinstance(a, Speculator)])
+    good = sum([1 for a in model.schedule.agents if isinstance(a, Speculator) and a.wealth > mean])
+    return good
+
+def compute_max_strategy_score(model):
+    max_scores = max([s.score for s in model.stategy_manager.strategies.values()])
+    return max_scores
 
 def compute_offer(model):
     model.offer = sum([-a.last_order for a in model.schedule.agents if a.last_order < 0])
     return model.offer
 
-
 def compute_price(model):
     model.last_price = model.price
+    if model.offer == 0:
+        return model.price
     model.price = np.exp(model.fluctuation_factor * np.tanh(np.log(model.demand / model.offer) / model.fluctuation_factor))
     return model.price
 
@@ -46,8 +100,7 @@ def compute_speculator_participation_rate(model):
 class MoneyModel(Model):
     def __init__(self, Ns, Np, influx, width, height, fluctuation_factor,
                  amplitude, producer_money, bias_factor, memory_size,
-                 speculator_money, prudent_factor):
-        super().__init__()
+                 speculator_money, prudent_factor, initial_price):
         self.demand = 1
         self.offer = 1
         self.num_speculators = Ns
@@ -56,9 +109,8 @@ class MoneyModel(Model):
         self.grid = MultiGrid(width, height, True)
         self.schedule = RandomActivation(self)
         self.last_price = 0
-        self.price = 1
+        self.price = initial_price
         self.fluctuation_factor = fluctuation_factor
-        self.demand_ratio = 1
         self.influx = influx
         self.amplitude = amplitude
         self.producer_money = producer_money
@@ -90,12 +142,28 @@ class MoneyModel(Model):
 
         self.datacollector = DataCollector(
             model_reporters={"Average Agent Wealth": compute_average_agent_wealth,
+                             "Average Speculator Wealth": compute_average_speculator_wealth,
+                             "Average Producer Wealth": compute_average_producer_wealth,
                              "Price": compute_price,
-                             "Offer": compute_offer,
+                             "Max Producer Wealth": compute_max_p_wealth,
+                             "Max Speculator Wealth": compute_max_s_wealth,
                              "Producer Participation Rate": compute_producer_participation_rate,
                              "Speculator Participation Rate": compute_speculator_participation_rate,
-                             "Demand": compute_demand},
-            agent_reporters={"Wealth": "wealth"})
+                             "Speculator Above AVG": compute_good_speculator,
+                             "Speculator Below AVG": compute_bad_speculator,
+                             "Producer Above AVG": compute_good_producer,
+                             "Producer Below AVG": compute_bad_producer,
+                             "Good Strategy": compute_good_strategy,
+                             "Bad Strategy": compute_bad_strategy,
+                             "Neutral Strategy": compute_neutral_strategy,
+                             "Demand": compute_demand,
+                             "Offer": compute_offer,
+                             "Strategies Max Score": compute_max_strategy_score,
+                             },
+            agent_reporters={"Wealth": lambda x: x.wealth})
+
+        self.running = True
+        self.datacollector.collect(self)
 
     def update_memory(self):
         # the paper didn't consider when the price doesn't change
@@ -112,7 +180,6 @@ class MoneyModel(Model):
         self.datacollector.collect(self)
         # update strategy scores
         self.stategy_manager.update_strategy_scores()
-
 
         # The following are performed periodically
         # replace poorly performing speculators
