@@ -20,12 +20,14 @@ class Producer(Agent):
         self.participating = False
 
     def gen_quench_factor(self, n):
-        # TODO: make this right
-        total = 1
-        dividers = sorted([random.uniform(0, total) for i in range(n - 1)])
-        result = [a - b for a, b in zip(dividers + [total], [0] + dividers)]
-        mean = statistics.mean(result)
-        result = list(map(lambda x: x if x > mean else -x, result))
+        # -1 to 1 uniformly with sum = 0
+        random.seed(time.time())
+        dividers = [random.uniform(-1,1) for i in range(n - 1)]
+        right = sorted([x for x in dividers if x >= 0] + [1])
+        left = sorted([x for x in dividers if x < 0] + [-1])
+        result = [right[i] - right[i - 1] for i in range(1, len(right))]
+        result += [left[i] - left[i + 1] for i in range(len(left) - 1)]
+        result += [-sum(result)]
         return result
 
     def gen_period(self):
