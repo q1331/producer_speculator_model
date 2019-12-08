@@ -7,7 +7,6 @@ class Speculator(Agent):
         self.wealth = money
         self.strategy = None
         self.memory_size = memory_size
-        self.memory = "0" * memory_size
         self.strategy_manager = strategy_manager
         self.pick_new_strategy()
         self.last_decision = 0
@@ -39,7 +38,9 @@ class Speculator(Agent):
         self.stocks += delta_amount
 
     def step(self):
-        if (self.join_time == 0 or self.strategy.score / self.join_time > 0.05) and self.wealth > 0:
+        if self.model.memory == self.strategy.pattern and \
+                (self.join_time == 0 or self.strategy.score / self.join_time > 0.05) and \
+                self.wealth > 0:
             self.participating = True
             self.invest()
             self.calc_wealth()

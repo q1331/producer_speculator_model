@@ -30,9 +30,17 @@ def compute_offer(model):
 
 def compute_price(model):
     model.last_price = model.price
-    model.price = np.exp(
-        model.fluctuation_factor * np.tanh(np.log(model.demand / model.offer) / model.fluctuation_factor))
+    model.price = np.exp(model.fluctuation_factor * np.tanh(np.log(model.demand / model.offer) / model.fluctuation_factor))
     return model.price
+
+def compute_producer_participation_rate(model):
+    participation_count = sum([1 for a in model.schedule.agents if a.participating and isinstance(a, Producer)])
+    return participation_count/model.num_producers
+
+def compute_speculator_participation_rate(model):
+    participation_count = sum([1 for a in model.schedule.agents if a.participating and isinstance(a, Speculator)])
+    return participation_count/model.num_speculators
+
 
 
 class MoneyModel(Model):
@@ -60,32 +68,40 @@ class MoneyModel(Model):
         self.memory_size = memory_size
         self.stategy_manager = StrategyManager(model=self, memory_size=memory_size)
         self.mean_wealth = 1
+        self.memory = "0" * memory_size
 
         # Create Producers
         for i in range(self.num_producers):
             p = Producer(unique_id=i, model=self, money=producer_money, bias_factor=bias_factor, amplitude=amplitude)
             self.schedule.add(p)
-            # Add the agent to a random grid cell
-            x = self.random.randrange(self.grid.width)
-            y = self.random.randrange(self.grid.height)
-            self.grid.place_agent(p, (x, y))
         # Create Speculators
         for i in range(self.num_producers + 1, self.num_producers + self.num_speculators + 1):
             s = Speculator(unique_id=i, model=self, money=self.speculator_money,
                            prudent_factor=self.prudent_factor, strategy_manager=self.stategy_manager,
                            memory_size=self.memory_size)
             self.schedule.add(s)
-            # Add the agent to a random grid cell
-            x = self.random.randrange(self.grid.width)
-            y = self.random.randrange(self.grid.height)
-            self.grid.place_agent(s, (x, y))
+        # Put agents to grid
+        for x in range(self.grid.width):
+            for y in range(self.grid.height):
+                if x*(self.grid.width) + y < len(self.schedule.agents):
+                    self.grid.place_agent(self.schedule.agents[x*(self.grid.width) + y], (x, y))
+                else:
+                    break
 
         self.datacollector = DataCollector(
             model_reporters={"Average Agent Wealth": compute_average_agent_wealth,
                              "Price": compute_price,
                              "Offer": compute_offer,
+                             "Producer Participation Rate": compute_producer_participation_rate,
+                             "Speculator Participation Rate": compute_speculator_participation_rate,
                              "Demand": compute_demand},
             agent_reporters={"Wealth": "wealth"})
+
+    def update_memory(self):
+        # the paper didn't consider when the price doesn't change
+        # 0 for increase 1 for decrease
+        price_change = "0" if self.last_price < self.price else "1"
+        self.memory = self.memory[1:] + str()
 
     def step(self):
 
@@ -96,6 +112,7 @@ class MoneyModel(Model):
         self.datacollector.collect(self)
         # update strategy scores
         self.stategy_manager.update_strategy_scores()
+
 
         # The following are performed periodically
         # replace poorly performing speculators
