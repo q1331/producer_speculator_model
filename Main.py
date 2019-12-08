@@ -76,12 +76,12 @@ max_score_chart = ChartModule([{"Label": "Strategies Max Score",
 agent_bar = BarChartModule([{"Label": "Wealth", "Color": "blue"}], scope="agent")
 
 producer_pie_chart = PieChartModule([
-                            {"Label": "Producer Above AVG", "Color": "red"},
-                            {"Label": "Producer Below AVG", "Color": "green"}])
+                            {"Label": "Good Producer", "Color": "red"},
+                            {"Label": "Bad Producer", "Color": "green"}])
 
 speculator_pie_chart = PieChartModule([
-    {"Label": "Speculator Above AVG", "Color": "red"},
-    {"Label": "Speculator Below AVG", "Color": "green"}])
+    {"Label": "Good Speculator", "Color": "red"},
+    {"Label": "Bad Speculator", "Color": "green"}])
 
 strategy_pie_chart = PieChartModule([
     {"Label": "Good Strategy", "Color": "red"},

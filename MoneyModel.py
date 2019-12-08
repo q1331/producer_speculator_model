@@ -52,24 +52,19 @@ def compute_neutral_strategy(model):
     return count
 
 def compute_bad_producer(model):
-    mean = statistics.mean([a.wealth for a in model.schedule.agents if isinstance(a, Producer)])
-    bad = sum([1 for a in model.schedule.agents if isinstance(a, Producer) and a.wealth < mean])
+    bad = sum([1 for a in model.schedule.agents if isinstance(a, Producer) and a.wealth < model.producer_money + (model.influx * (model.schedule.steps % 120))])
     return bad
 
 def compute_good_producer(model):
-    mean = statistics.mean([a.wealth for a in model.schedule.agents if isinstance(a, Producer)])
-    good = sum([1 for a in model.schedule.agents if isinstance(a, Producer) and a.wealth > mean])
+    good = sum([1 for a in model.schedule.agents if isinstance(a, Producer) and a.wealth > model.producer_money + (model.influx * (model.schedule.steps % 120))])
     return good
 
-
 def compute_bad_speculator(model):
-    mean = statistics.mean([a.wealth for a in model.schedule.agents if isinstance(a, Speculator)])
-    bad = sum([1 for a in model.schedule.agents if isinstance(a, Speculator) and a.wealth < mean])
+    bad = sum([1 for a in model.schedule.agents if isinstance(a, Speculator) and a.wealth < model.speculator_money])
     return bad
 
 def compute_good_speculator(model):
-    mean = statistics.mean([a.wealth for a in model.schedule.agents if isinstance(a, Speculator)])
-    good = sum([1 for a in model.schedule.agents if isinstance(a, Speculator) and a.wealth > mean])
+    good = sum([1 for a in model.schedule.agents if isinstance(a, Speculator) and a.wealth > model.speculator_money])
     return good
 
 def compute_max_strategy_score(model):
@@ -149,10 +144,10 @@ class MoneyModel(Model):
                              "Max Speculator Wealth": compute_max_s_wealth,
                              "Producer Participation Rate": compute_producer_participation_rate,
                              "Speculator Participation Rate": compute_speculator_participation_rate,
-                             "Speculator Above AVG": compute_good_speculator,
-                             "Speculator Below AVG": compute_bad_speculator,
-                             "Producer Above AVG": compute_good_producer,
-                             "Producer Below AVG": compute_bad_producer,
+                             "Bad Speculator": compute_good_speculator,
+                             "Good Speculator": compute_bad_speculator,
+                             "Good Producer": compute_good_producer,
+                             "Bad Producer": compute_bad_producer,
                              "Good Strategy": compute_good_strategy,
                              "Bad Strategy": compute_bad_strategy,
                              "Neutral Strategy": compute_neutral_strategy,
