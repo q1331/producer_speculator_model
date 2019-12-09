@@ -6,9 +6,10 @@ from mesa import Agent
 
 class Strategy():
 
-    def __init__(self, decision, pattern):
-        self.score = 0
-        self.decision = decision
+    def __init__(self, pattern):
+        self.score = 1
+        # randomly initialize initial decision to balance offer and demand
+        self.decision = int(pattern[-1])
         self.pattern = pattern
 
     def update_score(self, price_change):
@@ -16,7 +17,13 @@ class Strategy():
         # 0 for sell 1 for buy
         self.score += 1 if self.decision == price_change else -1
 
-    def make_decision(self):
+    def make_decision(self, model):
+        information = self.pattern
+        if model.schedule.steps >= model.memory_size:
+            information += model.memory
+        one_count = information.count("1")
+        zero_count = information.count("0")
+        self.decision = 1 if one_count > zero_count else 0
         return self.decision
 
 
@@ -24,15 +31,14 @@ class StrategyManager():
 
     def __init__(self, model, memory_size):
         self.memory_size = memory_size
-        format_string = '0' + str(memory_size) + 'b'
-        self.strategies = {format(i, format_string) + str(j): Strategy(j, format(i, format_string))
-                           for i in range(int(math.pow(2, memory_size))) for j in range(2)}
+        self.format_string = '0' + str(memory_size) + 'b'
+        self.strategies = {format(i, self.format_string): Strategy(format(i, self.format_string))
+                           for i in range(int(math.pow(2, memory_size)))}
         self.model = model
 
     def pick_strategy(self):
         random.seed(time.time())
-        format_string = '0' + str(self.memory_size + 1) + 'b'
-        return self.strategies[format(random.getrandbits(self.memory_size + 1), format_string)]
+        return self.strategies[format(random.getrandbits(self.memory_size), self.format_string)]
 
     def update_strategy_scores(self):
         last_price = self.model.last_price

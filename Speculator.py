@@ -28,7 +28,7 @@ class Speculator(Agent):
         self.wealth = self.money + self.stocks * self.model.price
 
     def invest(self):
-        delta_amount = self.prudent_factor * (2 * self.strategy.make_decision() - 1)
+        delta_amount = self.prudent_factor * (2 * self.strategy.make_decision(self.model) - 1)
         if self.model.demand > self.model.offer and delta_amount > 0:
             delta_amount = delta_amount * self.model.offer / self.model.demand
         if self.model.demand < self.model.offer and delta_amount < 0:
@@ -38,8 +38,7 @@ class Speculator(Agent):
         self.stocks += delta_amount
 
     def step(self):
-        if self.model.memory == self.strategy.pattern and \
-                (self.join_time == 0 or self.strategy.score / self.join_time > 0.05) and \
+        if (self.join_time == 0 or self.strategy.score / self.join_time > 0.05) and \
                 self.wealth > 0:
             self.participating = True
             self.invest()

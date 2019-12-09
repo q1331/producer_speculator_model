@@ -20,7 +20,7 @@ model_params = {"Ns": UserSettableParameter("slider", "Number of speculators", v
                 "producer_money": UserSettableParameter("slider", "Initial producer cash", value=1, min_value=1, max_value=100),
                 "initial_price": UserSettableParameter("slider", "Initial Price", value=1, min_value=1, max_value=100),
                 "bias_factor": UserSettableParameter("slider", "Bias factor(λ)", value=0.01, min_value = 0.001, max_value=1,step=0.001, description="The parameter λ measures the strength of the bias caused by the intrinsic value of the commodity."),
-                "memory_size": UserSettableParameter("slider", "Speculator memory size", value=2, min_value = 1, max_value=20, description="Length of the bit string."),
+                "memory_size": UserSettableParameter("slider", "Speculator memory size", value=10, min_value = 1, max_value=20, description="Length of the bit string."),
                 "speculator_money": UserSettableParameter("slider", "Initial speculator money", value=1, min_value=1, max_value=100),
                 "prudent_factor": UserSettableParameter("slider", "Speculator prudent factor(δ)", value=0.001, min_value=0.001, max_value=1, step=0.001),
                 "width": gird_width,

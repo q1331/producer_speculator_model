@@ -164,12 +164,13 @@ class MoneyModel(Model):
         # the paper didn't consider when the price doesn't change
         # 0 for increase 1 for decrease
         price_change = "0" if self.last_price < self.price else "1"
-        self.memory = self.memory[1:] + str()
+        self.memory = self.memory[1:] + str(price_change)
 
     def step(self):
 
         # Calculate amount of the commodity, attempted to buy by producers (Eq. (1)) and speculators (Eq. (2)).
         self.schedule.step()
+        self.update_memory()
         # Calculate demand and offer and from them the new price, according to (3) and (4).
         # Calculate new values of capital, stock and money according to (5), (6), and (7).
         self.datacollector.collect(self)
@@ -194,7 +195,7 @@ class MoneyModel(Model):
             for agent in self.schedule.agents:
                 if isinstance(agent, Speculator):
                     if count == randomize_speculator_id:
-                        agent.randomize_strategy()
+                        agent.pick_new_strategy()
                         break
                     count += 1
         # influx of external money
