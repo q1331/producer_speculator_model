@@ -50,9 +50,11 @@ class Producer(Agent):
                     self.quench_factor[(self.model.schedule.steps // self.time_scale) % self.period] -
                     self.bias_factor * math.log(self.model.price / self.model.mean_wealth))
         if self.model.demand > self.model.offer and delta_amount > 0:
-            delta_amount = delta_amount * self.model.offer / self.model.demand
+            if self.model.demand != 0:
+                delta_amount = delta_amount * self.model.offer / self.model.demand
         if self.model.demand < self.model.offer and delta_amount < 0:
-            delta_amount = delta_amount * self.model.demand / self.model.offer
+            if self.model.offer != 0:
+                delta_amount = delta_amount * self.model.demand / self.model.offer
         self.last_order = delta_amount
         self.money -= delta_amount * self.model.price
         self.stocks += delta_amount

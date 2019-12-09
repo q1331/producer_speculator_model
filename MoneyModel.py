@@ -27,6 +27,14 @@ def compute_average_producer_wealth(model):
     mean_wealth = statistics.mean(agent_wealths)
     return mean_wealth
 
+def compute_min_p_wealth(model):
+    min_p_wealths = min([agent.wealth for agent in model.schedule.agents if isinstance(agent, Producer)])
+    return min_p_wealths
+
+def compute_min_s_wealth(model):
+    min_s_wealths = min([agent.wealth for agent in model.schedule.agents if isinstance(agent, Speculator)])
+    return min_s_wealths
+
 def compute_max_p_wealth(model):
     max_p_wealths = max([agent.wealth for agent in model.schedule.agents if isinstance(agent, Producer)])
     return max_p_wealths
@@ -71,15 +79,20 @@ def compute_max_strategy_score(model):
     max_scores = max([s.score for s in model.strategy_manager.strategies.values()])
     return max_scores
 
+def compute_min_strategy_score(model):
+    min_scores = min([s.score for s in model.strategy_manager.strategies.values()])
+    return min_scores
+
 def compute_offer(model):
     model.offer = sum([-a.last_order for a in model.schedule.agents if a.last_order < 0])
     return model.offer
 
 def compute_price(model):
+    model.history += [model.price]
     model.last_price = model.price
     if model.offer == 0:
         return model.price
-    model.price = np.exp(model.fluctuation_factor * np.tanh(np.log(model.demand / model.offer) / model.fluctuation_factor))
+    model.price = model.price * np.exp(model.fluctuation_factor * np.tanh(np.log(model.demand / model.offer) / model.fluctuation_factor))
     return model.price
 
 def compute_producer_participation_rate(model):
@@ -90,6 +103,17 @@ def compute_speculator_participation_rate(model):
     participation_count = sum([1 for a in model.schedule.agents if a.participating and isinstance(a, Speculator)])
     return participation_count/model.num_speculators
 
+def compute_price_fluctuation(model):
+    l = 0.9999
+    T = model.schedule.steps
+    hist = model.history
+    lambda_t = sum([math.pow(l, t) for t in range(T)])
+    lambda_x_2 = sum([math.pow(l, T - t + 1)*math.pow(hist[t], 2) for t in range(T)])
+    lambda_x = math.pow(sum([math.pow(l, T - t + 1)*hist[t] for t in range(T)]),2)
+    if lambda_x == 0:
+        return 0
+    return math.sqrt(lambda_t*lambda_x_2/lambda_x - 1)
+
 
 
 class MoneyModel(Model):
@@ -98,6 +122,7 @@ class MoneyModel(Model):
                  speculator_money, prudent_factor, initial_price, crazy):
         self.demand = 1
         self.offer = 1
+        self.history = []
         self.num_speculators = Ns
         self.num_producers = Np
         self.num_agents = Ns + Np
@@ -142,6 +167,8 @@ class MoneyModel(Model):
                              "Price": compute_price,
                              "Max Producer Wealth": compute_max_p_wealth,
                              "Max Speculator Wealth": compute_max_s_wealth,
+                             "Min Producer Wealth": compute_min_p_wealth,
+                             "Min Speculator Wealth": compute_min_s_wealth,
                              "Producer Participation Rate": compute_producer_participation_rate,
                              "Speculator Participation Rate": compute_speculator_participation_rate,
                              "Bad Speculator": compute_good_speculator,
@@ -153,7 +180,9 @@ class MoneyModel(Model):
                              "Neutral Strategy": compute_neutral_strategy,
                              "Demand": compute_demand,
                              "Offer": compute_offer,
+                             "Fluctuation": compute_price_fluctuation,
                              "Strategies Max Score": compute_max_strategy_score,
+                             "Strategies Min Score": compute_min_strategy_score,
                              },
             agent_reporters={"Wealth": lambda x: x.wealth})
 
@@ -200,7 +229,10 @@ class MoneyModel(Model):
                     count += 1
         # influx of external money
         if self.schedule.steps % 120 == 0:
-            amount = self.influx * self.num_producers / sum(1 for a in self.schedule.agents if a.participating)
+            participation_count = sum(1 for a in self.schedule.agents if a.participating)
+            if participation_count == 0:
+                return
+            amount = self.influx * self.num_producers / participation_count
             for agent in self.schedule.agents:
                 if isinstance(agent, Producer) and agent.participating:
                     agent.influx(amount)

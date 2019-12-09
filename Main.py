@@ -14,8 +14,8 @@ canvas_width = 500
 chart_canvas_width = 500
 chart_canvas_height = 200
 
-model_params = {"Ns": UserSettableParameter("slider", "Number of speculators", value=1000, min_value=0, max_value=5000),
-                "Np": UserSettableParameter("slider", "Number of producers", value=50, min_value=0, max_value=5000),
+model_params = {"Ns": UserSettableParameter("slider", "Number of speculators", value=1000, min_value=1, max_value=5000),
+                "Np": UserSettableParameter("slider", "Number of producers", value=50, min_value=1, max_value=5000),
                 "influx": UserSettableParameter("slider", "Periodic money influx to producers(η)", value=0.001, min_value=0, max_value=1,step=0.001),
                 "fluctuation_factor": UserSettableParameter("slider", "Price fluctuation factor(α)", value=0.02, min_value=0.001,step=0.001, max_value=1),
                 "amplitude": UserSettableParameter("slider", "Amplitude of producer investment(ε)", value=0.01, min_value=0.001,step=0.001, max_value=1),
@@ -65,8 +65,10 @@ chart = ChartModule([{"Label": "Average Producer Wealth", "Color": "red"},
                     canvas_width=chart_canvas_width,
                     canvas_height=chart_canvas_height,
                     data_collector_name='datacollector')
-max_wealth_chart = ChartModule([{"Label": "Max Speculator Wealth", "Color": "Black"},
-                                  {"Label": "Max Producer Wealth", "Color": "Grey"}],
+wealth_chart = ChartModule([{"Label": "Max Speculator Wealth", "Color": "red"},
+                            {"Label": "Min Speculator Wealth", "Color": "greed"},
+                            {"Label": "Min Producer Wealth", "Color": "blue"},
+                                  {"Label": "Max Producer Wealth", "Color": "orange"}],
                                  canvas_width=chart_canvas_width,
                                  canvas_height=chart_canvas_height,
                                  data_collector_name='datacollector')
@@ -79,8 +81,15 @@ participation_chart = ChartModule([{"Label": "Speculator Participation Rate", "C
                                    ],
                                   data_collector_name='datacollector')
 max_score_chart = ChartModule([{"Label": "Strategies Max Score",
-                                    "Color": "orange"}],
+                                    "Color": "orange"},
+                               {"Label": "Strategies Min Score",
+                                    "Color": "blue"}
+                               ],
                                   data_collector_name='datacollector')
+
+fluctuation_chart = ChartModule([{"Label": "Fluctuation",
+                                "Color": "purple"}],
+                              data_collector_name='datacollector')
 
 agent_bar = BarChartModule([{"Label": "Wealth", "Color": "blue"}], scope="agent")
 
@@ -123,9 +132,10 @@ score_table = ScoreTable()
 wealth_table = WealthTable()
 
 server = ModularServer(MoneyModel,
-                       [grid, chart, price_chart, participation_chart, strategy_pie_chart,
-                        max_score_chart,producer_pie_chart, speculator_pie_chart,
-                        max_wealth_chart],
+                       [grid, chart, price_chart, participation_chart, wealth_chart,
+                        max_score_chart, fluctuation_chart,
+                        producer_pie_chart, strategy_pie_chart, speculator_pie_chart,
+                        ],
                        "Minority game with producers and speculators",
                        model_params)
 server.port = 8521

@@ -30,9 +30,11 @@ class Speculator(Agent):
     def invest(self):
         delta_amount = self.prudent_factor * (2 * self.strategy.make_decision(self.model) - 1)
         if self.model.demand > self.model.offer and delta_amount > 0:
-            delta_amount = delta_amount * self.model.offer / self.model.demand
+            if self.model.demand != 0:
+                delta_amount = delta_amount * self.model.offer / self.model.demand
         if self.model.demand < self.model.offer and delta_amount < 0:
-            delta_amount = delta_amount * self.model.demand / self.model.offer
+            if self.model.offer != 0:
+                delta_amount = delta_amount * self.model.demand / self.model.offer
         self.last_order = delta_amount
         self.money -= delta_amount * self.model.price
         self.stocks += delta_amount
