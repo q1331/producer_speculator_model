@@ -40,15 +40,15 @@ def compute_demand(model):
     return model.demand
 
 def compute_good_strategy(model):
-    good_count = sum([1 for s in model.stategy_manager.strategies.values() if s.score > 0])
+    good_count = sum([1 for s in model.strategy_manager.strategies.values() if s.score > 0])
     return good_count
 
 def compute_bad_strategy(model):
-    bad_count = sum([1 for s in model.stategy_manager.strategies.values() if s.score < 0])
+    bad_count = sum([1 for s in model.strategy_manager.strategies.values() if s.score < 0])
     return bad_count
 
 def compute_neutral_strategy(model):
-    count = sum([1 for s in model.stategy_manager.strategies.values() if s.score == 0])
+    count = sum([1 for s in model.strategy_manager.strategies.values() if s.score == 0])
     return count
 
 def compute_bad_producer(model):
@@ -68,7 +68,7 @@ def compute_good_speculator(model):
     return good
 
 def compute_max_strategy_score(model):
-    max_scores = max([s.score for s in model.stategy_manager.strategies.values()])
+    max_scores = max([s.score for s in model.strategy_manager.strategies.values()])
     return max_scores
 
 def compute_offer(model):
@@ -113,7 +113,7 @@ class MoneyModel(Model):
         self.speculator_money = speculator_money
         self.prudent_factor = prudent_factor
         self.memory_size = memory_size
-        self.stategy_manager = StrategyManager(model=self, memory_size=memory_size, crazy=crazy)
+        self.strategy_manager = StrategyManager(model=self, memory_size=memory_size, crazy=crazy)
         self.mean_wealth = 1
         self.memory = "0" * memory_size
 
@@ -124,7 +124,7 @@ class MoneyModel(Model):
         # Create Speculators
         for i in range(self.num_producers + 1, self.num_producers + self.num_speculators + 1):
             s = Speculator(unique_id=i, model=self, money=self.speculator_money,
-                           prudent_factor=self.prudent_factor, strategy_manager=self.stategy_manager,
+                           prudent_factor=self.prudent_factor, strategy_manager=self.strategy_manager,
                            memory_size=self.memory_size)
             self.schedule.add(s)
         # Put agents to grid
@@ -175,7 +175,7 @@ class MoneyModel(Model):
         # Calculate new values of capital, stock and money according to (5), (6), and (7).
         self.datacollector.collect(self)
         # update strategy scores
-        self.stategy_manager.update_strategy_scores()
+        self.strategy_manager.update_strategy_scores()
 
         # The following are performed periodically
         # replace poorly performing speculators

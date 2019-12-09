@@ -1,7 +1,9 @@
 from mesa.visualization.ModularVisualization import ModularServer
 from mesa.visualization.UserParam import UserSettableParameter
-from mesa.visualization.modules import CanvasGrid, BarChartModule, PieChartModule
+from mesa.visualization.modules import CanvasGrid, BarChartModule, PieChartModule, TextElement
 from mesa.visualization.modules import ChartModule
+from tabulate import tabulate
+
 
 from MoneyModel import *
 
@@ -34,9 +36,15 @@ def agent_portrayal(agent):
                  "r": 1}
     if agent.participating:
         if agent.last_order > 0:
-            portrayal["Color"] = "red"
+            if isinstance(agent, Producer):
+                portrayal["Color"] = "orange"
+            else:
+                portrayal["Color"] = "red"
         else:
-            portrayal["Color"] = "green"
+            if isinstance(agent, Producer):
+                portrayal["Color"] = "blue"
+            else:
+                portrayal["Color"] = "green"
         portrayal["Layer"] = 0
         portrayal["r"] = 1
     else:
@@ -88,6 +96,31 @@ strategy_pie_chart = PieChartModule([
     {"Label": "Good Strategy", "Color": "red"},
     {"Label": "Neutral Strategy", "Color": "grey"},
     {"Label": "Bad Strategy", "Color": "green"}])
+
+class ScoreTable(TextElement):
+    '''
+    Display a text count of how many happy agents there are.
+    '''
+    def __init__(self):
+        super().__init__()
+
+    def render(self, model):
+        result = tabulate([[int(k[:-1],2), v.score] for k, v in model.strategy_manager.strategies.items()])
+        return result
+
+class WealthTable(TextElement):
+    '''
+    Display a text count of how many happy agents there are.
+    '''
+    def __init__(self):
+        super().__init__()
+
+    def render(self, model):
+        result = tabulate([[i, v.wealth] for i, v in enumerate(model.schedule.agents)])
+        return result
+
+score_table = ScoreTable()
+wealth_table = WealthTable()
 
 server = ModularServer(MoneyModel,
                        [grid, chart, price_chart, participation_chart, strategy_pie_chart,
