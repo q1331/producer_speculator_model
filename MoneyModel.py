@@ -95,7 +95,7 @@ def compute_speculator_participation_rate(model):
 class MoneyModel(Model):
     def __init__(self, Ns, Np, influx, width, height, fluctuation_factor,
                  amplitude, producer_money, bias_factor, memory_size,
-                 speculator_money, prudent_factor, initial_price):
+                 speculator_money, prudent_factor, initial_price, crazy):
         self.demand = 1
         self.offer = 1
         self.num_speculators = Ns
@@ -113,7 +113,7 @@ class MoneyModel(Model):
         self.speculator_money = speculator_money
         self.prudent_factor = prudent_factor
         self.memory_size = memory_size
-        self.stategy_manager = StrategyManager(model=self, memory_size=memory_size)
+        self.stategy_manager = StrategyManager(model=self, memory_size=memory_size, crazy=crazy)
         self.mean_wealth = 1
         self.memory = "0" * memory_size
 

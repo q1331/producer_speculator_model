@@ -38,7 +38,8 @@ class Speculator(Agent):
         self.stocks += delta_amount
 
     def step(self):
-        if (self.join_time == 0 or self.strategy.score / self.join_time > 0.05) and \
+        if (self.strategy.crazy or self.strategy.pattern == self.model.memory) and \
+        (self.join_time == 0 or self.strategy.score / self.join_time > 0.05) and \
                 self.wealth > 0:
             self.participating = True
             self.invest()

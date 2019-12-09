@@ -23,6 +23,7 @@ model_params = {"Ns": UserSettableParameter("slider", "Number of speculators", v
                 "memory_size": UserSettableParameter("slider", "Speculator memory size", value=10, min_value = 1, max_value=20, description="Length of the bit string."),
                 "speculator_money": UserSettableParameter("slider", "Initial speculator money", value=1, min_value=1, max_value=100),
                 "prudent_factor": UserSettableParameter("slider", "Speculator prudent factor(δ)", value=0.001, min_value=0.001, max_value=1, step=0.001),
+                "crazy": UserSettableParameter("checkbox", "Crazy Speculators", value=False),
                 "width": gird_width,
                 "height": gird_height}
 
